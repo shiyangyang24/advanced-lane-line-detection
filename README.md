@@ -2,7 +2,7 @@
 this project is for advanced lane find
 
 1.Calibrate the camera:
-# Calibrate Camera Function 
+
 
 objp = np.zeros((8*11,3), np.float32)
 objp[:,:2] = np.mgrid[0:11, 0:8].T.reshape(-1,2)
@@ -20,40 +20,23 @@ because I use my camera in realistic scene , I use 8x11 board .
 
 
 2.combine  color space and gradient thresholding to get the best of both worlds. the code as below:
-def img_threshold(img):
-    """
 
-    :param img_: Input Image
-    :return: Thresholded Image
-    """
+
+def img_threshold(img):
     distorted_img = np.copy(img)
     dst = cv2.undistort(distorted_img, mtx, dist, None, mtx)
-    # Pull R
     R = dst[:,:,0]
-    
-    # Convert to HLS colorspace
     hls = cv2.cvtColor(dst, cv2.COLOR_RGB2HLS).astype(np.float)
-
     s_channel = hls[:,:,2]
-    
-    # Sobelx - takes the derivate in x, absolute value, then rescale
     sobelx = cv2.Sobel(s_channel, cv2.CV_64F, 1, 0, ksize = 7)
     abs_sobelx = np.absolute(sobelx)
     scaled_sobelx = np.uint8(255*abs_sobelx/np.max(abs_sobelx))
-    
-    # Threshold x gradient
     sxbinary = np.zeros_like(scaled_sobelx)
     sxbinary[(scaled_sobelx >= 10) & (scaled_sobelx <= 100)] = 1
-
-    # Threshold R color channel
     R_binary = np.zeros_like(R)
     R_binary[(R >= 200) & (R <= 255)] = 1
-    
-    # Threshold color channel
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= 125) & (s_channel <= 255)] = 1
-
-    # If two of the three are activated, activate in the binary image
     combined_binary = np.zeros_like(sxbinary)
     combined_binary[((s_binary == 1) & (sxbinary == 1)) | ((sxbinary == 1) & (R_binary == 1))
                      | ((s_binary == 1) & (R_binary == 1))] = 1
@@ -63,8 +46,8 @@ def img_threshold(img):
 
 3.Apply a perspective transform, choosing four source points manually,There are many other ways to select source points. For example, many perspective transform algorithms will programmatically detect four source points in an image based on edge or corner detection and analyzing attributes like color and surrounding pixels.next, we convert the four points on the original image to the transformed image .Note that the lanes in the transformed image are parallel.
 
-def birds_eye(img, mtx, dist):
 
+def birds_eye(img, mtx, dist):
     binary_img = img_threshold(img)
     
     # Undistort
@@ -126,13 +109,10 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH,1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT,720)
 i=0
 while(cap.isOpened()):
-
-
     ret, frame = cap.read()
     i=i+1
     if ret ==True:
-        if i>40:
-            
+        if i>40:            
             hit=process_video(frame)
             img_size = (frame.shape[1], frame.shape[0])
             
